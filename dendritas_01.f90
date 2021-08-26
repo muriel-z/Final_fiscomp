@@ -43,7 +43,7 @@ allocate(li_aux_x(1:600),li_aux_y(1:600))
 open(21,file='init_li0.dat',status='replace')
 do i = 1,100
     !vector que guarda la posicion del litio ordenado a lo largo de x
-    li_xd(i) = rli0*real(i,np) - Long/2
+    li_xd(i) = rli0*real(i,np)
     li_yd(i) = 0._np 
     write(21,*)li_xd(i),li_yd(i)
 enddo
@@ -56,6 +56,7 @@ Ly = 16.7e-9_np
 !Creacion de la posicion inicial de los 50 iones-------------------
 open(22,file='init_ion.dat',status='replace')
 do i = 1,nm
+!Por como estan escritas, las posiciones iniciales ya estan dentro de la caja de lados LxL
     e0x(i) = anint(rmzran()*200._np)*dx
     e0y(i) = anint(rmzran()*200._np)*dy
     write(22,*)e0x(i),e0y(i)
@@ -66,7 +67,7 @@ li_aux_x = 0._np
 li_aux_y = 0._np
 
 m = n0 !numero inicial de li0
-nt = 2000
+nt = 100
 open(23,file='evol_li0.dat',status='replace')
 open(24,file='evol_lim.dat',status='replace')
 !Definicion de las ecuaciones de movimiento browniano
@@ -80,8 +81,18 @@ do j = 1,nt
         ex(i) = e0x(i) + q*gx + r
         ey(i) = e0y(i) + q*gy + r
         !Meto las PBC
-        ex(i) = ex(i) - Long*dnint(ex(i)/Long)
-        ey(i) = ey(i) - Long*dnint(ey(i)/Long)
+        if (ex(i).gt.Long) then
+            ex(i) = ex(i) - Long
+        elseif (ex(i).lt.0._np) then
+            ex(i) = ex(i) + Long
+        endif
+        if (ey(i).gt.Long) then
+            ey(i) = ey(i) - Long
+        elseif (ey(i).lt.0._np) then
+            ey(i) = ey(i) + Long
+        endif
+        !ex(i) = ex(i) - Long*dnint(ex(i)/Long)
+        !ey(i) = ey(i) - Long*dnint(ey(i)/Long)
         !Definicion de la condicion Li+-->Li0
         !En cada t+dt tengo que actualizar una lista con las posiciones de los li0 y en base a eso tambien pedir (1) la actualizacion de particulas ion, es decir que se mantenga cte su densidad cada vez que pierden uno y (2) que si el ion se acerca a una cierta distancia datt se vuelva li0
         do k = 1,m
@@ -103,6 +114,17 @@ do j = 1,nt
                 !Tengo que reponer un ion en el espacio en la parte superior por eso le doy en los 50 primeros lugares
                 ex(i) = anint(rmzran()*50._np)*dx
                 ey(i) = anint(rmzran()*50._np)*dy
+                !Meto las PBC
+                if (ex(i).gt.Long) then
+                    ex(i) = ex(i) - Long
+                elseif (ex(i).lt.0._np) then
+                    ex(i) = ex(i) + Long
+                endif
+                if (ey(i).gt.Long) then
+                    ey(i) = ey(i) - Long
+                elseif (ey(i).lt.0._np) then
+                    ey(i) = ey(i) + Long
+                endif
             else
                 !Necesito poner un else porque de todas formas tengo que allocatear el li0x y li0y mas alla de si se le pega un ion o no !se supone que la linea siguiente llama a la subrutina pero conserva el numero m del litio depositado entonces no deberia cambiar
                 call save_li0(m,li_xd,li_yd,exs,eys, li0x,li0y,Long,li_aux_x,li_aux_y)
@@ -150,10 +172,8 @@ do i = 1,100
     li_auxy(i) = li_yyd(i)
 enddo
 !En los siguientes lugares tengo que guardar las nuevas posiciones de los li+ que pasan a ser li0 
-!--> No se muy bien como hacer esto... necesito ir guardando las coordenadas x e y de la entrada 101,102,...,m. Cuando m es el mas grande deacuerdo a los pasos temporales. ya que m va subiendo con el tiempo... 
-!me puedo crear un vector auxiliar li_auxx,li_auxy. El vector auxiliar tiene en total 600 entradas, las cuales son nulas y las va llenando a medida que m>100 y se va guardando justamente las posiciones de cada li+ que paso a li0. De esta forma tengo una especie de lista donde guardo estos valores. y en li0xx y li0yy me guardo las coordenadas no nulas :D
 
-!A ver, de alguna forma aca dentro tengo que poder sistematizar guardar todas las entradas de los vectores espaciales x e y cada vez que li+-->li0
+!me creo un vector auxiliar li_auxx,li_auxy. El vector auxiliar tiene en total 600 entradas, las cuales son nulas y las va llenando a medida que m>100 y se va guardando justamente las posiciones de cada li+ que paso a li0. De esta forma tengo una especie de lista donde guardo estos valores. y en li0xx y li0yy me guardo las coordenadas no nulas :D
 
 !Se llena la entrada m
 li_auxx(mm) = exx 
@@ -165,8 +185,18 @@ do i = 1,mm
 enddo
 !Doy las PBC
 do i = 1,mm
-    li0xx(i) = li0xx(i) - Longg*dnint(li0xx(i)/Longg)
-    li0yy(i) = li0yy(i) - Longg*dnint(li0yy(i)/Longg)
+    if (li0xx(i).gt.Longg) then
+        li0xx(i) = li0xx(i) - Longg
+    elseif (li0xx(i).lt.0._np) then
+        li0xx(i) = li0xx(i) + Longg
+    endif
+    if (li0yy(i).gt.Longg) then
+        li0yy(i) = li0yy(i) - Longg
+    elseif (li0yy(i).lt.0._np) then
+        li0yy(i) = li0yy(i) + Longg
+    endif
+    !li0xx(i) = li0xx(i) - Longg*dnint(li0xx(i)/Longg)
+    !li0yy(i) = li0yy(i) - Longg*dnint(li0yy(i)/Longg)
 enddo
     
 end Subroutine save_li0
