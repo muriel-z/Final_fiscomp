@@ -19,15 +19,15 @@ integer                                 ::nt !numeros de pasos temporales
 integer                                 ::i,j,k,m,l
 
 !Inicializacion de variables
-dt = 1.0e-6_np
-n0 = 100 !comienzo con este numero de li0
+dt = 1.0e-3_np
+n0 = 78 !comienzo con este numero de li0 depositados sobre la sup
 n0max = 600 !numero maximo de particulas li0
 rli0 = 1.67e-10_np  !radio atomico del li0
 rlim = 1.2e-10_np   !radio atomico del li+
 nm = 50 !Este numero debe mantenerse a lo largo de la ev temporal
 D = 1.4e-10_np !coef de dif del Li+ en el electrolito
-q = sqrt(2._np*D*dt) !desplazamiento medio debido a la difusion
-r = 0._np !mu+*E*dt es el desplazamiento debido al campo electrico
+q = sqrt(2._np*D*dt)/Long !desplazamiento medio debido a la difusion
+r = 0._np !mu+*E*dt/Long es el desplazamiento debido al campo electrico
 gx = 0
 gy = 0
 datt = 1.3_np*rli0 !que es rli0/(pi/4)
@@ -41,10 +41,10 @@ allocate(li_aux_x(1:600),li_aux_y(1:600))
 
 !creacion de los Li0 depositados uniformemente sobre el anodo--------------------------------------------------------------
 open(21,file='init_li0.dat',status='replace')
-do i = 1,100
-    !vector que guarda la posicion del litio ordenado a lo largo de x
-    li_xd(i) = rli0*real(i,np)
-    li_yd(i) = 0._np 
+do i = 1,n0
+    !vector que guarda la posicion del litio ordenado a lo largo de x normalizado por Long
+    li_xd(i) = 1.3_np*rli0*real(i,np)/Long
+    li_yd(i) = 0._np/Long 
     write(21,*)li_xd(i),li_yd(i)
 enddo
 
@@ -56,9 +56,9 @@ Ly = 16.7e-9_np
 !Creacion de la posicion inicial de los 50 iones-------------------
 open(22,file='init_ion.dat',status='replace')
 do i = 1,nm
-!Por como estan escritas, las posiciones iniciales ya estan dentro de la caja de lados LxL
-    e0x(i) = anint(rmzran()*200._np)*dx
-    e0y(i) = anint(rmzran()*200._np)*dy
+!Posiciones iniciales normalizadas por la longitud Long
+    e0x(i) = anint(rmzran()*200._np)*dx/Long
+    e0y(i) = anint(rmzran()*200._np)*dy/Long
     write(22,*)e0x(i),e0y(i)
 enddo
 
@@ -67,7 +67,7 @@ li_aux_x = 0._np
 li_aux_y = 0._np
 
 m = n0 !numero inicial de li0
-nt =2000
+nt =100
 open(23,file='evol_li0.dat',status='replace')
 open(24,file='evol_lim.dat',status='replace')
 !Definicion de las ecuaciones de movimiento browniano
@@ -81,20 +81,9 @@ do j = 1,nt
         ex(i) = e0x(i) + q*gx + r
         ey(i) = e0y(i) + q*gy + r
         !Meto las PBC
-!         if (ex(i).gt.Long) then
-!             ex(i) = ex(i) - Long
-!         elseif (ex(i).lt.0._np) then
-!             ex(i) = ex(i) + Long
-!         endif
-!         if (ey(i).gt.Long) then
-!             ey(i) = ey(i) - Long
-!         elseif (ey(i).lt.0._np) then
-!             ey(i) = ey(i) + Long
-!         endif
         ex(i) = ex(i) - Long*dnint(ex(i)/Long-0.5_np)
         ey(i) = ey(i) - Long*dnint(ey(i)/Long+0.5_np) + Long
         !Definicion de la condicion Li+-->Li0
-        !En cada t+dt tengo que actualizar una lista con las posiciones de los li0 y en base a eso tambien pedir (1) la actualizacion de particulas ion, es decir que se mantenga cte su densidad cada vez que pierden uno y (2) que si el ion se acerca a una cierta distancia datt se vuelva li0
         do k = 1,m
             if ( m.le.100) then
                 distx = ex(i)-li_xd(k) 
@@ -106,30 +95,19 @@ do j = 1,nt
                 dist = sqrt( distx*distx + disty*disty )
             endif
             if (dist<datt) then 
-                !Aparece un nuevo punto en li_xd y li_yd que va a ser igual que las coordenadas que el ion viejo
-                m = m+1
+                m = m+1 !Aumenta la dimension del arreglo del li0
                 exs = ex(i)
                 eys = ey(i)
-                call save_li0(m,li_xd,li_yd,exs,eys,li0x,li0y,Long,li_aux_x,li_aux_y) !Guardo la nueva posicion del li0
-                !Tengo que reponer un ion en el espacio en la parte superior por eso le doy en los 50 primeros lugares
+                call save_li0(m,n0,li_xd,li_yd,exs,eys,li0x,li0y,Long,li_aux_x,li_aux_y) !Guardo la nueva posicion del li0
+                !Tengo que reponer un ion en el espacio de forma aleatoria
                 ex(i) = anint(rmzran()*200._np)*dx
                 ey(i) = anint(rmzran()*200._np)*dy
                 !Meto las PBC
-!                 if (ex(i).gt.Long) then
-!                     ex(i) = ex(i) - Long
-!                 elseif (ex(i).lt.0._np) then
-!                     ex(i) = ex(i) + Long
-!                 endif
-!                 if (ey(i).gt.Long) then
-!                     ey(i) = ey(i) - Long
-!                 elseif (ey(i).lt.0._np) then
-!                     ey(i) = ey(i) + Long
-!                 endif
                 ex(i) = ex(i) - Long*dnint(ex(i)/Long-0.5_np)
                 ey(i) = ey(i) - Long*dnint(ey(i)/Long+0.5_np) + Long
             else
                 !Necesito poner un else porque de todas formas tengo que allocatear el li0x y li0y mas alla de si se le pega un ion o no !se supone que la linea siguiente llama a la subrutina pero conserva el numero m del litio depositado entonces no deberia cambiar
-                call save_li0(m,li_xd,li_yd,exs,eys, li0x,li0y,Long,li_aux_x,li_aux_y)
+                call save_li0(m,n0,li_xd,li_yd,exs,eys, li0x,li0y,Long,li_aux_x,li_aux_y)
             endif
         enddo
     enddo
@@ -137,7 +115,7 @@ do j = 1,nt
     t = real(j,np)*dt
     e0x = ex
     e0y = ey
-    write(*,*) real(j,np)/real(nt,np)
+    write(*,*) real(j,np)/real(nt,np)*100._np
 enddo
 write(*,*)m
 write(*,*)nm
@@ -159,8 +137,8 @@ close(24)
 !*******************************************************************
 contains
 
-Subroutine save_li0(mm,li_xxd,li_yyd,exx,eyy,li0xx,li0yy,Longg,li_auxx,li_auxy)
-integer,intent(in)                              ::mm
+Subroutine save_li0(mm,n00,li_xxd,li_yyd,exx,eyy,li0xx,li0yy,Longg,li_auxx,li_auxy)
+integer,intent(in)                              ::mm,n00
 real(np),intent(in)                             ::exx,eyy,Longg
 real(np),dimension(1:100),intent(in)            ::li_xxd, li_yyd
 real(np),dimension(:),allocatable,intent(out)   ::li0xx, li0yy
@@ -169,7 +147,7 @@ integer                                         ::i,nn
 allocate(li0xx(1:mm),li0yy(1:mm))
 
 !En los primeros 100 lugares guardo el litio depositado sobre el anodo
-do i = 1,100
+do i = 1,n00
     li_auxx(i) = li_xxd(i)
     li_auxy(i) = li_yyd(i)
 enddo
@@ -187,16 +165,6 @@ do i = 1,mm
 enddo
 !Doy las PBC
 do i = 1,mm
-!     if (li0xx(i).gt.Longg) then
-!         li0xx(i) = li0xx(i) - Longg
-!     elseif (li0xx(i).lt.0._np) then
-!         li0xx(i) = li0xx(i) + Longg
-!     endif
-!     if (li0yy(i).gt.Longg) then
-!         li0yy(i) = li0yy(i) - Longg
-!     elseif (li0yy(i).lt.0._np) then
-!         li0yy(i) = li0yy(i) + Longg
-!     endif
     li0xx(i) = li0xx(i) - Longg*dnint(li0xx(i)/Longg-0.5_np)
     li0yy(i) = li0yy(i) - Longg*dnint(li0yy(i)/Longg+0.5_np) + Longg
 enddo
