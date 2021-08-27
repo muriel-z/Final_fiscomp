@@ -6,7 +6,7 @@ set xzeroaxis
 
 set title ''
 
-#set key top right
+set key box top right
 
 set grid xtic
 set grid ytic
