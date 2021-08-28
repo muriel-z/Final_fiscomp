@@ -65,7 +65,7 @@ li_aux_x(:) = 0._np
 li_aux_y(:) = 0._np
 
 m = n0 !numero inicial de li0
-nt =3000
+nt =5000
 open(23,file='evol_li0.dat',status='replace')
 open(24,file='evol_lim.dat',status='replace')
 !Definicion de las ecuaciones de movimiento browniano

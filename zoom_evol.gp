@@ -4,7 +4,7 @@ set ylabel ''
 
 set xzeroaxis
 
-set title 'Zoom en la formacion de dendritas con E=0, dt=1ms y t=500ms'
+set title 'Zoom en la formacion de dendritas dt=1us y t=240us'
 
 set key box top right
 
@@ -16,7 +16,7 @@ set yrange[0:0.3]
 
 set size square
 
-plot 'evol_li0.dat' t 'li0' w p pt 7 ps 1,'evol_lim.dat' t 'ion' w p pt 7 ps 1
+plot 'evol_li0_02.dat' t 'li0' w p pt 7 ps 1,'evol_lim_02.dat' t 'ion' w p pt 7 ps 1
 
 set terminal pdf color
 set output 'grafico_zoom_evol.pdf'
