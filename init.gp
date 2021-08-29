@@ -13,7 +13,11 @@ set grid ytic
 
 set size square
 
-plot 'init_li0.dat' t 'li0' w p pt 7 ps 0.5,'init_ion.dat' t 'ion' w p pt 7 ps 0.5
+#set xrange[0:1]
+#set yrange[0:1]
+
+
+plot 'init_li0_03.dat' t 'li0' w p pt 7 ps 0.5,'init_ion_03.dat' t 'ion' w p pt 7 ps 0.5
 
 set terminal pdf color
 set output 'grafico_init.pdf'

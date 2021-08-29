@@ -20,7 +20,7 @@ integer                                 ::i,j,k,m,l
 
 !Inicializacion de variables
 dt = 1.0e-6_np
-n0 = 78 !comienzo con este numero de li0 depositados sobre la sup
+n0 = 77 !comienzo con este numero de li0 depositados sobre la sup
 n0max = 600 !numero maximo de particulas li0
 rli0 = 1.67e-10_np  !radio atomico del li0
 rlim = 1.2e-10_np   !radio atomico del li+
@@ -55,8 +55,8 @@ dy = rli0/(2._np*Long)
 open(22,file='init_ion.dat',status='replace')
 do i = 1,nm
 !Posiciones iniciales normalizadas por la longitud Long
-    e0x(i) = anint(rmzran()*200._np)*dx
-    e0y(i) = anint(rmzran()*200._np)*dy
+    e0x(i) = dnint(rmzran()*200._np)*dx
+    e0y(i) = dnint(rmzran()*200._np)*dy
     write(22,*)e0x(i),e0y(i)
 enddo
 
@@ -138,14 +138,14 @@ contains
 Subroutine save_li0(mm,li_xxd,li_yyd,exx,eyy,li0xx,li0yy,li_auxx,li_auxy)
 integer,intent(in)                              ::mm
 real(np),intent(in)                             ::exx,eyy
-real(np),dimension(1:78),intent(in)            ::li_xxd, li_yyd
+real(np),dimension(1:77),intent(in)            ::li_xxd, li_yyd
 real(np),dimension(:),allocatable,intent(out)   ::li0xx, li0yy
 real(np),dimension(1:600),intent(inout)         ::li_auxx, li_auxy
 integer                                         ::i,nn
 allocate(li0xx(1:mm),li0yy(1:mm))
 
 !En los primeros 100 lugares guardo el litio depositado sobre el anodo
-do i = 1,78
+do i = 1,77
     li_auxx(i) = li_xxd(i)
     li_auxy(i) = li_yyd(i)
 enddo
