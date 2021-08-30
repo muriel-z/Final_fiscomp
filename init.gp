@@ -13,8 +13,8 @@ set grid ytic
 
 set size square
 
-#set xrange[0:1]
-#set yrange[0:1]
+set xrange[0:154]
+set yrange[0:154]
 
 
 plot 'init_li0_03.dat' t 'li0' w p pt 7 ps 0.5,'init_ion_03.dat' t 'ion' w p pt 7 ps 0.5

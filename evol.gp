@@ -11,8 +11,8 @@ set key box top right
 set grid xtic
 set grid ytic
 
-!set xrange[0:1]
-!set yrange[0:1]
+set xrange[0:154]
+set yrange[0:154]
 
 set size square
 
